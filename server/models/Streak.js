@@ -22,8 +22,8 @@ const StreakSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
+// Check if the model already exists to prevent recompilation
+const Streak = mongoose.models.Streak || mongoose.model('Streak', StreakSchema);
 
-const Streak = mongoose.model('Streak', StreakSchema);
-
-
-module.exports = { Streak };  // Export the model
+// Export as an object with a Streak property
+module.exports = { Streak };

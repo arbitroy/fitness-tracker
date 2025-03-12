@@ -2,6 +2,7 @@ const Activity = require('../models/Activity');
 const gamificationController = require('./gamificationController');
 const { Friendship, WorkoutPartnership } = require('../models/Social');
 const { createNotification } = require('./notificationController');
+const { Streak } = require('../models/Streak');
 const mongoose = require('mongoose');
 
 exports.logActivity = async (req, res) => {
