@@ -11,6 +11,7 @@ const gamificationRoutes = require('./routes/gamificationRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const partnershipRoutes = require('./routes/partnershipRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/chat', chatRoutes);
 app.use('/partnerships', partnershipRoutes);
 app.use('/gamification', gamificationRoutes);
 app.use('/analytics', analyticsRoutes);
+app.use('/dashboard', dashboardRoutes); 
 
 
 // Connect to database

@@ -1,10 +1,12 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationsDropdown from '../components/features/notifications/NotificationsDropdown';
-import { NavigationMenu, MobileNavigationDrawer,BreadcrumbNavigation } from '../components/navigation';
+import { NavigationMenu, MobileNavigationDrawer, BreadcrumbNavigation } from '../components/navigation';
 import PropTypes from 'prop-types';
+import { API_BASE_URL } from '../../../server/config/env';
+import Feedback from '../components/common/Feedback';
 
 // Tooltip Component
 const StatsTooltip = ({ children, content }) => (
@@ -36,8 +38,27 @@ const StatCard = ({ stat, onClick, index }) => (
   >
     <h3 className="text-lg font-medium text-orange-200 mb-2">{stat.title}</h3>
     <StatsTooltip content={stat.tooltip}>
-      <p className="text-3xl font-bold text-red-500">{stat.value}</p>
+      <div className="flex items-center space-x-2">
+        <p className="text-3xl font-bold text-red-500">{stat.value}</p>
+        {stat.change && (
+          <span className={`text-sm ${stat.change > 0 ? 'text-green-500' : 'text-red-400'}`}>
+            {stat.change > 0 ? '↑' : '↓'} {Math.abs(stat.change)}%
+          </span>
+        )}
+      </div>
     </StatsTooltip>
+    {stat.progress !== undefined && (
+      <div className="mt-3">
+        <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${stat.progress}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full"
+          />
+        </div>
+      </div>
+    )}
   </motion.div>
 );
 
@@ -46,21 +67,23 @@ StatCard.propTypes = {
     title: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
     tooltip: PropTypes.string.isRequired,
-    isClickable: PropTypes.bool
+    isClickable: PropTypes.bool,
+    progress: PropTypes.number,
+    change: PropTypes.number
   }).isRequired,
   onClick: PropTypes.func,
   index: PropTypes.number.isRequired
 };
 
 // Quick Action Button Component
-const QuickActionButton = ({ action, index }) => (
+const QuickActionButton = ({ action, index, onActionClick }) => (
   <motion.button
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: 0.2 + (index * 0.1) }}
     whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
     whileTap={{ scale: 0.98 }}
-    onClick={action.onClick}
+    onClick={() => onActionClick(action)}
     className="relative group bg-gradient-to-br from-black to-red-950/30 p-6 rounded-xl 
              border border-red-500/10 hover:border-red-500/30 transition-all duration-300"
   >
@@ -96,7 +119,8 @@ QuickActionButton.propTypes = {
     icon: PropTypes.node.isRequired,
     stat: PropTypes.string
   }).isRequired,
-  index: PropTypes.number.isRequired
+  index: PropTypes.number.isRequired,
+  onActionClick: PropTypes.func.isRequired
 };
 
 // Activity Item Component
@@ -132,7 +156,7 @@ const ActivityItem = ({ activity, index }) => (
 
 ActivityItem.propTypes = {
   activity: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     name: PropTypes.string.isRequired,
     time: PropTypes.string.isRequired,
     color: PropTypes.string.isRequired,
@@ -143,7 +167,7 @@ ActivityItem.propTypes = {
 };
 
 // Weekly Insight Modal Component
-const WeeklyInsightModal = ({ isOpen, onClose }) => (
+const WeeklyInsightModal = ({ isOpen, onClose, insightData }) => (
   <AnimatePresence>
     {isOpen && (
       <motion.div
@@ -164,25 +188,42 @@ const WeeklyInsightModal = ({ isOpen, onClose }) => (
           <h3 className="text-xl font-bold text-orange-200">Weekly Progress Insight</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-orange-200/80">Steps Goal Progress</span>
-              <span className="text-orange-200">65%</span>
+              <span className="text-orange-200/80">Weekly Goal Progress</span>
+              <span className="text-orange-200">{insightData.goalProgress}%</span>
             </div>
             <div className="h-2 bg-black/40 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: '65%' }}
+                animate={{ width: `${insightData.goalProgress}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
                 className="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full"
               />
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="bg-black/20 p-4 rounded-lg">
-                <p className="text-orange-200/60 text-sm">Total Steps</p>
-                <p className="text-2xl font-bold text-orange-200">24,562</p>
+                <p className="text-orange-200/60 text-sm">Total Workouts</p>
+                <p className="text-2xl font-bold text-orange-200">{insightData.totalWorkouts}</p>
               </div>
               <div className="bg-black/20 p-4 rounded-lg">
                 <p className="text-orange-200/60 text-sm">Calories Burned</p>
-                <p className="text-2xl font-bold text-orange-200">1,284</p>
+                <p className="text-2xl font-bold text-orange-200">{insightData.totalCalories}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <h4 className="text-orange-200 font-medium mb-2">Active Days</h4>
+              <div className="flex justify-between">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                  <div key={day} className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full mb-1 flex items-center justify-center
+                      ${insightData.activeDays.includes(index) 
+                        ? 'bg-gradient-to-br from-red-500 to-orange-500 text-white' 
+                        : 'bg-black/40 text-gray-400'}`}>
+                      {day[0]}
+                    </div>
+                    <span className="text-xs text-orange-200/60">{day}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -201,7 +242,13 @@ const WeeklyInsightModal = ({ isOpen, onClose }) => (
 
 WeeklyInsightModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  insightData: PropTypes.shape({
+    goalProgress: PropTypes.number.isRequired,
+    totalWorkouts: PropTypes.number.isRequired,
+    totalCalories: PropTypes.number.isRequired,
+    activeDays: PropTypes.array.isRequired
+  }).isRequired
 };
 
 // Main Dashboard Component
@@ -210,29 +257,236 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [showWeeklyInsight, setShowWeeklyInsight] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    dailyGoal: {
+      target: 5000,
+      current: 0,
+      progress: 0
+    },
+    weeklyProgress: {
+      percentage: 0,
+      activeDays: []
+    },
+    recentActivities: [],
+    insightData: {
+      goalProgress: 0,
+      totalWorkouts: 0,
+      totalCalories: 0,
+      activeDays: []
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch activity summary data
+      const activityResponse = await fetch(`${API_BASE_URL}/activity/summary`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!activityResponse.ok) {
+        throw new Error('Failed to fetch activity data');
+      }
+
+      const activityData = await activityResponse.json();
+
+      // Fetch recent activities
+      const recentResponse = await fetch(`${API_BASE_URL}/activity/list?limit=3`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!recentResponse.ok) {
+        throw new Error('Failed to fetch recent activities');
+      }
+
+      const recentActivities = await recentResponse.json();
+
+      // Fetch streak data
+      const streakResponse = await fetch(`${API_BASE_URL}/gamification/streak`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!streakResponse.ok) {
+        throw new Error('Failed to fetch streak data');
+      }
+
+      const streakData = await streakResponse.json();
+
+      // Calculate current day of week (0-6, where 0 is Sunday)
+      const today = new Date().getDay();
+      
+      // Process active days from activity dates
+      const activeDays = getActiveDaysOfWeek(recentActivities);
+      
+      // Calculate daily goal progress (using a placeholder step count)
+      const dailyGoalTarget = 5000; // This could come from user settings
+      const currentSteps = Math.min(3248, dailyGoalTarget); // Placeholder
+      const stepsProgress = Math.round((currentSteps / dailyGoalTarget) * 100);
+      
+      // Calculate weekly progress based on activities compared to user's weekly goal
+      const weeklyGoal = user?.fitness?.weeklyGoal?.workouts || 3;
+      const workoutsThisWeek = activeDays.length;
+      const weeklyProgress = Math.round((workoutsThisWeek / weeklyGoal) * 100);
+
+      // Format recent activities for display
+      const formattedActivities = recentActivities.map(activity => ({
+        id: activity._id,
+        name: formatActivityName(activity.type),
+        time: formatTimeAgo(new Date(activity.date)),
+        color: getActivityColor(activity.type),
+        stats: activity.distance ? `${activity.distance} km` : `${activity.duration} min`,
+        highlight: activity.calories > 300 // Just a sample condition for highlighting
+      }));
+
+      // Update dashboard data state
+      setDashboardData({
+        dailyGoal: {
+          target: dailyGoalTarget,
+          current: currentSteps,
+          progress: stepsProgress
+        },
+        weeklyProgress: {
+          percentage: weeklyProgress,
+          activeDays: activeDays
+        },
+        recentActivities: formattedActivities,
+        insightData: {
+          goalProgress: weeklyProgress,
+          totalWorkouts: activityData.totalActivities || workoutsThisWeek,
+          totalCalories: activityData.totalCalories || 1284, // Fallback value
+          activeDays: activeDays
+        }
+      });
+
+      setFeedback({
+        type: 'success',
+        message: 'Dashboard data updated successfully',
+        autoClose: true
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setFeedback({
+        type: 'error',
+        message: 'Failed to load dashboard data: ' + error.message
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper to get active days of week from activities
+  const getActiveDaysOfWeek = (activities) => {
+    const activeDays = new Set();
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
+    
+    activities.forEach(activity => {
+      const activityDate = new Date(activity.date);
+      // Check if the activity was in the current week
+      if (activityDate >= startOfWeek && activityDate <= today) {
+        const dayOfWeek = activityDate.getDay(); // 0-6 (Sunday-Saturday)
+        activeDays.add(dayOfWeek);
+      }
+    });
+    
+    return Array.from(activeDays);
+  };
+
+  // Helper to format activity name
+  const formatActivityName = (type) => {
+    const names = {
+      running: 'Morning Run',
+      walking: 'Walk',
+      cycling: 'Cycling',
+      swimming: 'Swimming',
+      weightlifting: 'Weight Training',
+      yoga: 'Yoga Session',
+      other: 'Workout'
+    };
+    return names[type] || 'Workout';
+  };
+
+  // Helper to format time ago
+  const formatTimeAgo = (date) => {
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return diffInDays === 1 ? 'Yesterday' : `${diffInDays} days ago`;
+    }
+  };
+
+  // Helper to get color based on activity type
+  const getActivityColor = (type) => {
+    const colors = {
+      running: 'bg-red-500',
+      walking: 'bg-orange-500',
+      cycling: 'bg-yellow-500',
+      swimming: 'bg-blue-500',
+      weightlifting: 'bg-purple-500',
+      yoga: 'bg-green-500',
+      other: 'bg-gray-500'
+    };
+    return colors[type] || 'bg-red-500';
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleActionClick = (action) => {
+    // Show feedback first
+    setFeedback({
+      type: 'info',
+      message: `Navigating to ${action.name}...`,
+      autoClose: true
+    });
+    
+    // Then navigate after a short delay
+    setTimeout(() => {
+      action.onClick();
+    }, 300);
+  };
+
+  // Format stats for display
   const stats = [
     {
       title: "Today's Goal",
-      value: "5,000 steps",
-      progress: 3248,
-      tooltip: "Daily step goal - you've completed 3,248 steps so far"
+      value: `${dashboardData.dailyGoal.current.toLocaleString()} / ${dashboardData.dailyGoal.target.toLocaleString()} steps`,
+      progress: dashboardData.dailyGoal.progress,
+      tooltip: `Daily step goal - you've completed ${dashboardData.dailyGoal.current.toLocaleString()} steps so far`,
+      change: 5 // Sample value showing 5% improvement
     },
     {
       title: "Weekly Progress",
-      value: "75%",
+      value: `${dashboardData.weeklyProgress.percentage}%`,
       isClickable: true,
-      tooltip: "Click to view detailed weekly stats"
+      tooltip: "Click to view detailed weekly stats",
+      progress: dashboardData.weeklyProgress.percentage
     },
     {
       title: "Active Days",
-      value: "5/7",
-      tooltip: "You've been active 5 out of 7 days this week"
+      value: `${dashboardData.weeklyProgress.activeDays.length}/7`,
+      tooltip: `You've been active ${dashboardData.weeklyProgress.activeDays.length} out of 7 days this week`
     }
   ];
 
@@ -295,30 +549,17 @@ const Dashboard = () => {
     }
   ];
 
-  const recentActivities = [
-    { 
-      id: 1, 
-      name: 'Morning Run', 
-      time: '2 hours ago',
-      color: 'bg-red-500',
-      highlight: true,
-      stats: '5.2 km'
-    },
-    { 
-      id: 2, 
-      name: 'Weight Training', 
-      time: 'Yesterday',
-      color: 'bg-orange-500',
-      stats: '320 calories'
-    },
-    { 
-      id: 3, 
-      name: 'Yoga Session', 
-      time: '2 days ago',
-      color: 'bg-red-500',
-      stats: '45 minutes'
-    }
-  ];
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex justify-center items-center">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin"></div>
+          <p className="mt-4 text-orange-200">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black">
@@ -333,7 +574,14 @@ const Dashboard = () => {
             <div className="flex items-center">
               <motion.span
                 whileHover={{ scale: 1.05 }}
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                  fetchDashboardData();
+                  setFeedback({
+                    type: 'info',
+                    message: 'Refreshing dashboard data...',
+                    autoClose: true
+                  });
+                }}
                 className="text-xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent 
                           cursor-pointer"
               >
@@ -388,6 +636,23 @@ const Dashboard = () => {
         <div className="px-4 sm:px-0">
           <BreadcrumbNavigation />
           
+          <AnimatePresence>
+            {feedback && (
+              <motion.div
+                className="mt-4"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <Feedback
+                  type={feedback.type}
+                  message={feedback.message}
+                  onClose={() => setFeedback(null)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
           <div className="grid md:grid-cols-[240px,1fr] gap-6 mt-6">
             {/* Navigation Sidebar - Hidden on mobile */}
             <div className="hidden md:block">
@@ -415,6 +680,7 @@ const Dashboard = () => {
                     key={action.name}
                     action={action}
                     index={index}
+                    onActionClick={handleActionClick}
                   />
                 ))}
               </div>
@@ -431,20 +697,42 @@ const Dashboard = () => {
                     <h3 className="text-lg font-medium text-orange-200">Recent Activity</h3>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
-                      onClick={() => navigate('/fitness')}
+                      onClick={() => {
+                        setFeedback({
+                          type: 'info',
+                          message: 'Navigating to Fitness Tracker...',
+                          autoClose: true
+                        });
+                        setTimeout(() => navigate('/fitness'), 300);
+                      }}
                       className="text-sm text-red-400 hover:text-red-300 transition-colors"
                     >
                       View All
                     </motion.button>
                   </div>
                   <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
-                      <ActivityItem
-                        key={activity.id}
-                        activity={activity}
-                        index={index}
-                      />
-                    ))}
+                    {dashboardData.recentActivities.length > 0 ? (
+                      dashboardData.recentActivities.map((activity, index) => (
+                        <ActivityItem
+                          key={activity.id}
+                          activity={activity}
+                          index={index}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-orange-200/70">
+                        <p>No recent activities found. Start tracking your workouts!</p>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => navigate('/fitness')}
+                          className="mt-4 px-4 py-2 bg-gradient-to-r from-red-500/30 to-orange-500/30 
+                                   text-orange-200 rounded-lg hover:from-red-500/40 hover:to-orange-500/40"
+                        >
+                          Log an Activity
+                        </motion.button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -463,6 +751,7 @@ const Dashboard = () => {
       <WeeklyInsightModal
         isOpen={showWeeklyInsight}
         onClose={() => setShowWeeklyInsight(false)}
+        insightData={dashboardData.insightData}
       />
     </div>
   );

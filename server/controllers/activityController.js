@@ -367,3 +367,83 @@ exports.addReaction = async (req, res) => {
         });
     }
 };
+
+
+exports.getActivitySummary = async (req, res) => {
+    try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        // Get current date information
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Query activities for the last 30 days
+        const activities = await Activity.find({
+            user: req.userId,
+            date: { $gte: thirtyDaysAgo }
+        });
+
+        // Query activities for this week
+        const weeklyActivities = await Activity.find({
+            user: req.userId,
+            date: { $gte: startOfWeek, $lte: endOfWeek }
+        });
+
+        // Calculate active days of the week
+        const activeDays = new Set();
+        weeklyActivities.forEach(activity => {
+            const dayOfWeek = new Date(activity.date).getDay(); // 0-6
+            activeDays.add(dayOfWeek);
+        });
+
+        // Calculate streak
+        const streak = await Streak.findOne({ userId: req.userId });
+
+        // Calculate stats for all activities
+        const summary = {
+            totalActivities: activities.length,
+            totalDuration: activities.reduce((sum, act) => sum + act.duration, 0),
+            totalCalories: activities.reduce((sum, act) => sum + (act.calories || 0), 0),
+            totalDistance: activities.reduce((sum, act) => sum + (act.distance || 0), 0),
+            weeklyActivities: weeklyActivities.length,
+            weeklyDuration: weeklyActivities.reduce((sum, act) => sum + act.duration, 0),
+            weeklyCalories: weeklyActivities.reduce((sum, act) => sum + (act.calories || 0), 0),
+            activeDays: Array.from(activeDays),
+            streak: streak ? streak.currentStreak : 0,
+            bestStreak: streak ? streak.bestStreak : 0,
+            byType: {}
+        };
+
+        // Calculate stats by activity type
+        activities.forEach(activity => {
+            if (!summary.byType[activity.type]) {
+                summary.byType[activity.type] = {
+                    count: 0,
+                    totalDuration: 0,
+                    totalCalories: 0,
+                    totalDistance: 0
+                };
+            }
+            summary.byType[activity.type].count++;
+            summary.byType[activity.type].totalDuration += activity.duration;
+            summary.byType[activity.type].totalCalories += activity.calories || 0;
+            summary.byType[activity.type].totalDistance += activity.distance || 0;
+        });
+
+        res.json(summary);
+    } catch (error) {
+        console.error('Error in getActivitySummary:', error);
+        res.status(500).json({
+            message: 'Failed to fetch activity summary',
+            error: error.message
+        });
+    }
+};
