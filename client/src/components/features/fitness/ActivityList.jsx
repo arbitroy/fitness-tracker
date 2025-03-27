@@ -47,11 +47,11 @@ const ActivityList = ({ onError, refreshTrigger }) => {
         const hours = Math.floor(totalSeconds / 3600);
         const mins = Math.floor((totalSeconds % 3600) / 60);
         const secs = totalSeconds % 60;
-        
+
         const formattedHours = hours > 0 ? `${hours}h ` : '';
         const formattedMins = mins > 0 ? `${mins}m ` : '';
         const formattedSecs = secs > 0 ? `${secs}s` : '';
-        
+
         return `${formattedHours}${formattedMins}${formattedSecs}`;
     };
 
@@ -59,7 +59,7 @@ const ActivityList = ({ onError, refreshTrigger }) => {
         try {
             let url = `${API_BASE_URL}/activity/list`;
             const queryParams = [];
-    
+
             if (filter.type !== 'all') {
                 queryParams.push(`type=${filter.type}`);
             }
@@ -69,21 +69,21 @@ const ActivityList = ({ onError, refreshTrigger }) => {
             if (filter.endDate) {
                 queryParams.push(`endDate=${filter.endDate}`);
             }
-    
+
             if (queryParams.length > 0) {
                 url += `?${queryParams.join('&')}`;
             }
-    
+
             const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
-    
+
             if (!response.ok) {
                 throw new Error('Failed to fetch activities');
             }
-    
+
             const data = await response.json();
             setActivities(data);
         } catch (err) {
@@ -91,12 +91,12 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                 type: 'error',
                 message: err.message || 'Failed to fetch activities'
             });
-            
+
             // Auto-dismiss feedback after 3 seconds
             setTimeout(() => {
                 setFeedback(null);
             }, 3000);
-            
+
             if (onError) onError(err);
         } finally {
             setLoading(false);
@@ -121,12 +121,12 @@ const ActivityList = ({ onError, refreshTrigger }) => {
             }
 
             setActivities(prev => prev.filter(activity => activity._id !== activityId));
-            
+
             setFeedback({
                 type: 'success',
                 message: 'Activity deleted successfully'
             });
-            
+
             // Auto-dismiss feedback after 3 seconds
             setTimeout(() => {
                 setFeedback(null);
@@ -136,12 +136,12 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                 type: 'error',
                 message: error.message || 'Failed to delete activity'
             });
-            
+
             // Auto-dismiss feedback after 3 seconds
             setTimeout(() => {
                 setFeedback(null);
             }, 3000);
-            
+
             if (onError) onError(error);
         }
     };
@@ -177,18 +177,18 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* Filters */}
-            <div className="bg-black/20 p-4 rounded-lg border border-red-500/10">
-                <h2 className="text-lg font-medium text-orange-200 mb-4">Activity Filters</h2>
+            <div className="bg-black/20 p-4 rounded-lg border border-blue-500/10">
+                <h2 className="text-lg font-medium text-blue-200 mb-4">Activity Filters</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-orange-200/70 mb-1">Activity Type</label>
+                        <label className="block text-sm font-medium text-blue-200/70 mb-1">Activity Type</label>
                         <select
                             value={filter.type}
                             onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))}
-                            className="w-full bg-black/20 border border-red-500/20 rounded-lg text-orange-200
-                     focus:border-red-500/50 focus:ring-0 transition-colors"
+                            className="w-full bg-black/20 border border-blue-500/20 rounded-lg text-blue-200
+                     focus:border-blue-500/50 focus:ring-0 transition-colors"
                         >
                             {activityTypes.map(type => (
                                 <option className="bg-black text-white" key={type.value} value={type.value}>{type.label}</option>
@@ -197,24 +197,24 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-orange-200/70 mb-1">Start Date</label>
+                        <label className="block text-sm font-medium text-blue-200/70 mb-1">Start Date</label>
                         <input
                             type="date"
                             value={filter.startDate}
                             onChange={(e) => setFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                            className="w-full bg-black/20 border border-red-500/20 rounded-lg text-orange-200
-                            focus:border-red-500/50 focus:ring-0 transition-colors"
+                            className="w-full bg-black/20 border border-blue-500/20 rounded-lg text-blue-200
+                            focus:border-blue-500/50 focus:ring-0 transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-orange-200/70 mb-1">End Date</label>
+                        <label className="block text-sm font-medium text-blue-200/70 mb-1">End Date</label>
                         <input
                             type="date"
                             value={filter.endDate}
                             onChange={(e) => setFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                            className="w-full bg-black/20 border border-red-500/20 rounded-lg text-orange-200
-                     focus:border-red-500/50 focus:ring-0 transition-colors"
+                            className="w-full bg-black/20 border border-blue-500/20 rounded-lg text-blue-200
+                     focus:border-blue-500/50 focus:ring-0 transition-colors"
                         />
                     </div>
                 </div>
@@ -223,7 +223,7 @@ const ActivityList = ({ onError, refreshTrigger }) => {
             {/* Activities List */}
             {activities.length === 0 ? (
                 <div className="text-center py-8">
-                    <p className="text-orange-200/70">No activities found</p>
+                    <p className="text-blue-200/70">No activities found</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -235,7 +235,7 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-black/20 rounded-lg border border-red-500/10 overflow-hidden"
+                                className="bg-black/20 rounded-lg border border-blue-500/10 overflow-hidden"
                             >
                                 {/* Activity Header */}
                                 <div
@@ -244,24 +244,24 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center space-x-4">
-                                            <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-lg w-10 h-10 flex items-center justify-center text-xl">
+                                            <div className="p-2 bg-gradient-to-br from-blue-500/20 to-blue-500/20 rounded-lg w-10 h-10 flex items-center justify-center text-xl">
                                                 {activityEmojis[activity.type] || activityEmojis.other}
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-medium text-orange-200 capitalize">
+                                                <h3 className="text-lg font-medium text-blue-200 capitalize">
                                                     {activity.type}
                                                 </h3>
-                                                <p className="text-orange-200/70">
+                                                <p className="text-blue-200/70">
                                                     {new Date(activity.date).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-4">
-                                            <span className="text-orange-200/70">
+                                            <span className="text-blue-200/70">
                                                 {formatDuration(activity.duration)}
                                             </span>
                                             <svg
-                                                className={`w-5 h-5 text-orange-200/70 transform transition-transform 
+                                                className={`w-5 h-5 text-blue-200/70 transform transition-transform 
                                 ${expandedActivity === activity._id ? 'rotate-180' : ''}`}
                                                 fill="none"
                                                 stroke="currentColor"
@@ -282,25 +282,25 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                                             exit={{ height: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="px-4 py-3 bg-black/10 border-t border-red-500/10">
+                                            <div className="px-4 py-3 bg-black/10 border-t border-blue-500/10">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
-                                                        <p className="text-orange-200/70">Duration: {formatDuration(activity.duration)}</p>
+                                                        <p className="text-blue-200/70">Duration: {formatDuration(activity.duration)}</p>
                                                         {activity.distance && (
-                                                            <p className="text-orange-200/70">Distance: {activity.distance} km</p>
+                                                            <p className="text-blue-200/70">Distance: {activity.distance} km</p>
                                                         )}
                                                         {activity.calories && (
-                                                            <p className="text-orange-200/70">Calories: {activity.calories} kcal</p>
+                                                            <p className="text-blue-200/70">Calories: {activity.calories} kcal</p>
                                                         )}
                                                     </div>
 
                                                     {activity.sets && activity.sets.length > 0 && (
                                                         <div className="space-y-2">
-                                                            <p className="text-orange-200">Sets:</p>
+                                                            <p className="text-blue-200">Sets:</p>
                                                             {activity.sets.map((set, index) => (
                                                                 <div key={index} className="flex justify-between bg-black/20 p-2 rounded">
-                                                                    <span className="text-orange-200">{set.exercise}</span>
-                                                                    <span className="text-orange-200/70">{set.weight}kg × {set.reps}</span>
+                                                                    <span className="text-blue-200">{set.exercise}</span>
+                                                                    <span className="text-blue-200/70">{set.weight}kg × {set.reps}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -308,8 +308,8 @@ const ActivityList = ({ onError, refreshTrigger }) => {
 
                                                     {activity.notes && (
                                                         <div className="col-span-2">
-                                                            <p className="text-orange-200">Notes:</p>
-                                                            <p className="text-orange-200/70 mt-1">{activity.notes}</p>
+                                                            <p className="text-blue-200">Notes:</p>
+                                                            <p className="text-blue-200/70 mt-1">{activity.notes}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -319,7 +319,7 @@ const ActivityList = ({ onError, refreshTrigger }) => {
                                                         whileHover={{ scale: 1.05 }}
                                                         whileTap={{ scale: 0.95 }}
                                                         onClick={() => handleDelete(activity._id)}
-                                                        className="text-red-400 hover:text-red-300 transition-colors"
+                                                        className="text-blue-400 hover:text-blue-300 transition-colors"
                                                     >
                                                         Delete Activity
                                                     </motion.button>

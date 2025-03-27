@@ -1,20 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import PropTypes from 'prop-types';
+import { useEffect, useRef, useState } from 'react';
 
 const LiveExerciseTimer = ({
     isActive,
     onTimerComplete,
-    initialDuration,
     activityType,
     onCancel,
     onPause,
     onResume,
     onUpdateStats
 }) => {
-    const [time, setTime] = useState(initialDuration * 60); // Convert minutes to seconds
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [formattedTime, setFormattedTime] = useState('00:00:00');
-    const [isRunning, setIsRunning] = useState(false);
+    const [isRunning, setIsRunning] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
     const [caloriesBurned, setCaloriesBurned] = useState(0);
     const [distance, setDistance] = useState(0);
@@ -71,30 +70,30 @@ const LiveExerciseTimer = ({
 
     // Start timer when component becomes active
     useEffect(() => {
-        if (isActive && !isRunning && !isPaused) {
+        if (isActive && !isPaused) {
             startTimeRef.current = Date.now() - pausedTimeRef.current;
             setIsRunning(true);
         }
-    }, [isActive, isRunning, isPaused]);
+    }, [isActive, isPaused]);
 
     // Main timer logic
     useEffect(() => {
         if (isRunning) {
             timerRef.current = setInterval(() => {
-                const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-                setTime(elapsedSeconds);
-                setFormattedTime(formatTime(elapsedSeconds));
+                const newElapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+                setElapsedSeconds(newElapsedSeconds);
+                setFormattedTime(formatTime(newElapsedSeconds));
 
                 // Update stats every second
-                const newCalories = calculateCalories(elapsedSeconds, activityType);
-                const newDistance = calculateDistance(elapsedSeconds, activityType);
+                const newCalories = calculateCalories(newElapsedSeconds, activityType);
+                const newDistance = calculateDistance(newElapsedSeconds, activityType);
 
                 setCaloriesBurned(newCalories);
                 setDistance(newDistance);
 
                 // Update parent component with current stats
                 onUpdateStats({
-                    duration: Math.ceil(elapsedSeconds / 60), // Convert to minutes
+                    duration: Math.ceil(newElapsedSeconds / 60), // Convert to minutes
                     calories: newCalories,
                     distance: newDistance
                 });
@@ -129,7 +128,7 @@ const LiveExerciseTimer = ({
 
         // Calculate final stats
         const finalStats = {
-            duration: Math.ceil(time / 60), // Convert to minutes
+            duration: Math.max(1, Math.ceil(elapsedSeconds / 60)), // Minimum 1 minute, convert to minutes
             calories: caloriesBurned,
             distance: distance
         };
@@ -159,13 +158,13 @@ const LiveExerciseTimer = ({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-black/60 rounded-xl border border-red-500/20 p-6 space-y-6"
+                    className="bg-black/60 rounded-xl border border-blue-500/20 p-6 space-y-6"
                 >
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-orange-200 mb-2">
+                        <h2 className="text-2xl font-bold text-blue-200 mb-2">
                             Live {activityType.charAt(0).toUpperCase() + activityType.slice(1)} Tracker
                         </h2>
-                        <p className="text-orange-200/70">Keep going! You're doing great!</p>
+                        <p className="text-blue-200/70">Keep going! You're doing great!</p>
                     </div>
 
                     {/* Timer Display */}
@@ -173,29 +172,29 @@ const LiveExerciseTimer = ({
                         <motion.div
                             animate={{ scale: [1, 1.03, 1] }}
                             transition={{ repeat: Infinity, duration: 2 }}
-                            className="w-64 h-64 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 
-                       border-4 border-red-500/30 flex items-center justify-center"
+                            className="w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-500/20 
+                       border-4 border-blue-500/30 flex items-center justify-center"
                         >
-                            <span className="text-4xl font-bold text-orange-200">{formattedTime}</span>
+                            <span className="text-4xl font-bold text-blue-200">{formattedTime}</span>
                         </motion.div>
                     </div>
 
                     {/* Stats Display */}
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <div className="bg-black/40 p-4 rounded-lg">
-                            <h3 className="text-sm font-medium text-orange-200/70 mb-1">Calories</h3>
-                            <p className="text-2xl font-bold text-orange-200">{caloriesBurned}</p>
+                            <h3 className="text-sm font-medium text-blue-200/70 mb-1">Calories</h3>
+                            <p className="text-2xl font-bold text-blue-200">{caloriesBurned}</p>
                         </div>
                         {['running', 'walking', 'cycling', 'swimming'].includes(activityType) && (
                             <div className="bg-black/40 p-4 rounded-lg">
-                                <h3 className="text-sm font-medium text-orange-200/70 mb-1">Distance (km)</h3>
-                                <p className="text-2xl font-bold text-orange-200">{distance}</p>
+                                <h3 className="text-sm font-medium text-blue-200/70 mb-1">Distance (km)</h3>
+                                <p className="text-2xl font-bold text-blue-200">{distance}</p>
                             </div>
                         )}
                         {!['running', 'walking', 'cycling', 'swimming'].includes(activityType) && (
                             <div className="bg-black/40 p-4 rounded-lg">
-                                <h3 className="text-sm font-medium text-orange-200/70 mb-1">Duration (min)</h3>
-                                <p className="text-2xl font-bold text-orange-200">{Math.ceil(time / 60)}</p>
+                                <h3 className="text-sm font-medium text-blue-200/70 mb-1">Duration (min)</h3>
+                                <p className="text-2xl font-bold text-blue-200">{Math.ceil(elapsedSeconds / 60)}</p>
                             </div>
                         )}
                     </div>
@@ -206,7 +205,7 @@ const LiveExerciseTimer = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleCancel}
-                            className="flex-1 py-3 rounded-lg bg-black/40 text-red-400 border border-red-500/20
+                            className="flex-1 py-3 rounded-lg bg-black/40 text-blue-400 border border-blue-500/20
                        hover:bg-black/60 transition-colors"
                         >
                             Cancel
@@ -217,7 +216,7 @@ const LiveExerciseTimer = ({
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handlePause}
-                                className="flex-1 py-3 rounded-lg bg-black/40 text-orange-200 border border-orange-500/20
+                                className="flex-1 py-3 rounded-lg bg-black/40 text-blue-200 border border-blue-500/20
                          hover:bg-black/60 transition-colors"
                             >
                                 Pause
@@ -227,7 +226,7 @@ const LiveExerciseTimer = ({
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleResume}
-                                className="flex-1 py-3 rounded-lg bg-black/40 text-orange-200 border border-orange-500/20
+                                className="flex-1 py-3 rounded-lg bg-black/40 text-blue-200 border border-blue-500/20
                          hover:bg-black/60 transition-colors"
                             >
                                 Resume
@@ -238,8 +237,8 @@ const LiveExerciseTimer = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleStop}
-                            className="flex-1 py-3 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 text-white
-                       hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300"
+                            className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-500 text-white
+                       hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                         >
                             Complete
                         </motion.button>
@@ -253,7 +252,6 @@ const LiveExerciseTimer = ({
 LiveExerciseTimer.propTypes = {
     isActive: PropTypes.bool.isRequired,
     onTimerComplete: PropTypes.func.isRequired,
-    initialDuration: PropTypes.number.isRequired,
     activityType: PropTypes.string.isRequired,
     onCancel: PropTypes.func.isRequired,
     onPause: PropTypes.func,

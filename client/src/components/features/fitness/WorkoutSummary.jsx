@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { calculateIntensityLevel, getActivityIcon, getCompletionMessage } from '../../../utils/TimerPresetsUtils';
 
@@ -31,7 +31,7 @@ const WorkoutSummary = ({ workout, onClose, onSave }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-black/60 rounded-xl border border-red-500/20 p-6 space-y-6"
+            className="bg-black/60 rounded-xl border border-blue-500/20 p-6 space-y-6"
         >
             <div className="text-center">
                 <motion.div
@@ -44,67 +44,67 @@ const WorkoutSummary = ({ workout, onClose, onSave }) => {
                     }}
                     className="flex justify-center"
                 >
-                    <div className="w-16 h-16 flex items-center justify-center text-3xl bg-gradient-to-br from-red-500/30 to-orange-500/30 
-                         rounded-full border-2 border-orange-500/40">
+                    <div className="w-16 h-16 flex items-center justify-center text-3xl bg-gradient-to-br from-blue-500/30 to-blue-500/30 
+                         rounded-full border-2 border-blue-500/40">
                         {activityIcon}
                     </div>
                 </motion.div>
 
-                <h2 className="text-2xl font-bold text-orange-200 mt-4 mb-2">
+                <h2 className="text-2xl font-bold text-blue-200 mt-4 mb-2">
                     Workout Complete!
                 </h2>
 
-                <p className="text-orange-200/70">
+                <p className="text-blue-200/70">
                     {completionMessage}
                 </p>
             </div>
 
-            <div className="border-t border-b border-red-500/10 py-4">
-                <h3 className="text-lg font-medium text-orange-200 mb-4">
+            <div className="border-t border-b border-blue-500/10 py-4">
+                <h3 className="text-lg font-medium text-blue-200 mb-4">
                     Workout Summary
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Activity</h4>
-                        <p className="text-lg font-medium text-orange-200 capitalize">
+                        <h4 className="text-sm font-medium text-blue-200/70">Activity</h4>
+                        <p className="text-lg font-medium text-blue-200 capitalize">
                             {workout.type}
                         </p>
                     </div>
 
                     <div className="bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Duration</h4>
-                        <p className="text-lg font-medium text-orange-200">
+                        <h4 className="text-sm font-medium text-blue-200/70">Duration</h4>
+                        <p className="text-lg font-medium text-blue-200">
                             {workout.duration} minutes
                         </p>
                     </div>
 
                     <div className="bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Calories</h4>
-                        <p className="text-lg font-medium text-orange-200">
+                        <h4 className="text-sm font-medium text-blue-200/70">Calories</h4>
+                        <p className="text-lg font-medium text-blue-200">
                             {workout.calories || 0}
                         </p>
                     </div>
 
                     {workout.distance && (
                         <div className="bg-black/40 p-4 rounded-lg">
-                            <h4 className="text-sm font-medium text-orange-200/70">Distance</h4>
-                            <p className="text-lg font-medium text-orange-200">
+                            <h4 className="text-sm font-medium text-blue-200/70">Distance</h4>
+                            <p className="text-lg font-medium text-blue-200">
                                 {workout.distance} km
                             </p>
                         </div>
                     )}
 
                     <div className="bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Intensity</h4>
-                        <p className="text-lg font-medium text-orange-200">
+                        <h4 className="text-sm font-medium text-blue-200/70">Intensity</h4>
+                        <p className="text-lg font-medium text-blue-200">
                             {intensityLevel}
                         </p>
                     </div>
 
                     <div className="bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Date</h4>
-                        <p className="text-lg font-medium text-orange-200">
+                        <h4 className="text-sm font-medium text-blue-200/70">Date</h4>
+                        <p className="text-lg font-medium text-blue-200">
                             {formatDate(workout.date)}
                         </p>
                     </div>
@@ -112,22 +112,22 @@ const WorkoutSummary = ({ workout, onClose, onSave }) => {
 
                 {workout.notes && (
                     <div className="mt-4 bg-black/40 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-orange-200/70">Notes</h4>
-                        <p className="text-orange-200">{workout.notes}</p>
+                        <h4 className="text-sm font-medium text-blue-200/70">Notes</h4>
+                        <p className="text-blue-200">{workout.notes}</p>
                     </div>
                 )}
 
                 {workout.sets && workout.sets.length > 0 && (
                     <div className="mt-4">
-                        <h4 className="text-sm font-medium text-orange-200/70 mb-2">Sets</h4>
+                        <h4 className="text-sm font-medium text-blue-200/70 mb-2">Sets</h4>
                         <div className="space-y-2">
                             {workout.sets.map((set, index) => (
                                 <div
                                     key={index}
                                     className="flex justify-between items-center bg-black/40 p-3 rounded-lg"
                                 >
-                                    <span className="text-orange-200">{set.exercise}</span>
-                                    <span className="text-orange-200/70">{set.weight}kg × {set.reps}</span>
+                                    <span className="text-blue-200">{set.exercise}</span>
+                                    <span className="text-blue-200/70">{set.weight}kg × {set.reps}</span>
                                 </div>
                             ))}
                         </div>
@@ -140,7 +140,7 @@ const WorkoutSummary = ({ workout, onClose, onSave }) => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={onClose}
-                    className="flex-1 py-3 rounded-lg bg-black/40 text-orange-200 border border-orange-500/20
+                    className="flex-1 py-3 rounded-lg bg-black/40 text-blue-200 border border-blue-500/20
                    hover:bg-black/60 transition-colors"
                 >
                     Discard
@@ -150,8 +150,8 @@ const WorkoutSummary = ({ workout, onClose, onSave }) => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onSave(workout)}
-                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 text-white
-                   hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300"
+                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-500 text-white
+                   hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                 >
                     Save Workout
                 </motion.button>
